@@ -40,7 +40,8 @@ export default defineConfig({
 
         observability: {
           enabled: true,
-          logs: { enabled: true },
+
+          logs: { enabled: true, invocation_logs: true },
         },
 
         preview_urls: true,
