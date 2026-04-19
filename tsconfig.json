@@ -1,0 +1,14 @@
+{
+  "extends": "nitro/tsconfig",
+  "include": [
+    ".nitro/types/nitro.d.ts",
+    "./src/**/*"
+  ],
+  "compilerOptions": {
+    "paths": {
+      "#lib/*": ["./server/lib/*"],
+      "#server/*": ["./server/*"],
+      "#/*": ["./*"],
+    },
+  },
+}

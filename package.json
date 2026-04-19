@@ -1,0 +1,22 @@
+{
+  "name": "nitro-starter",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite dev",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "nitro": "^3.0.260415-beta",
+    "vite": "^8.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.3"
+  },
+  "imports": {
+    "#lib/*": "./server/lib/*",
+    "#server/*": "./server/*",
+    "#/*": "./*"
+  }
+}
