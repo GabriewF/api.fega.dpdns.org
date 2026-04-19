@@ -39,6 +39,7 @@ export default defineConfig({
         },
 
         preview_urls: true,
+        workers_dev: false,
       }
     },
 
