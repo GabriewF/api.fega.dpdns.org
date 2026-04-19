@@ -38,6 +38,11 @@ export default defineConfig({
           custom_domain: true,
         },
 
+        observability: {
+          enabled: true,
+          logs: { enabled: true },
+        },
+
         preview_urls: true,
         workers_dev: false,
       }
