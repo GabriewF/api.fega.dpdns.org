@@ -1,5 +1,5 @@
 {
-  "name": "nitro-starter",
+  "name": "@gabriewf/api.fega.dpdns.org",
   "type": "module",
   "scripts": {
     "build": "vite build",
