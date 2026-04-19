@@ -1,6 +1,7 @@
 export const messages = {
     authRequired: (uri: string, code: string) => `Autenticação necessária. Acesse ${uri} e insira o código: ${code}`,
     authPending: (uri: string, code: string) => `Autenticação pendente. Acesse ${uri} e insira o código: ${code}`,
+    createdClip: (uri: string) => `Clipe criado! ${uri}`,
 
     authError: "Erro ao iniciar autenticação. Tente novamente.",
     clipError: "Não foi possível criar o clipe. Tente novamente.",

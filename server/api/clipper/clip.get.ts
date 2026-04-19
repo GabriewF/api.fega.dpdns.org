@@ -7,8 +7,8 @@ import { $fetch, FetchError } from "ofetch";
 import { TWITCH_ENDPOINTS } from "#lib/twitch/constants.ts";
 import { messages } from "#lib/twitch/messages.ts";
 import type { TwitchClipResponse } from "#lib/twitch/types.js";
-import authToken from "#server/middlewares/auth-token.ts";
 import authOauth from "#server/middlewares/auth-oauth.ts";
+import authToken from "#server/middlewares/auth-token.ts";
 
 interface IContext extends H3EventContext {
     channelId: string;
@@ -39,7 +39,7 @@ export default defineHandler({
             if (!clip)
                 return messages.clipNoData;
 
-            return clip.edit_url;
+            return messages.createdClip(clip.edit_url);
         } catch (e) {
             if (e instanceof FetchError)
                 return messages.clipError;
