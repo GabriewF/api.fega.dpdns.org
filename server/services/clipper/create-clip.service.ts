@@ -1,5 +1,5 @@
-import { sendDiscordWebhook } from "#server/integrations/discord/webhook";
-import { getTwitchClipById } from "#server/integrations/twitch/api/clips";
+import { sendDiscordWebhook } from "#server/integrations/discord/webhook.ts";
+import { getTwitchClipById } from "#server/integrations/twitch/api/clips.ts";
 
 export async function handleClipCreated(
     clipUrl: string,
