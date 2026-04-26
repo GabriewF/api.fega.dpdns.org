@@ -1,9 +1,9 @@
 import { $fetch } from "ofetch";
 
+import { clipperAppStorage, clipperOAuthStorage } from "#lib/clipper/storage.ts";
 import { getTwitchConfig } from "#lib/twitch/config.ts";
-import { TWITCH_ENDPOINTS, TWITCH_GRANT_TYPES } from "#lib/twitch/constants.ts";
-import { authStorage, procStorage } from "#lib/twitch/storages.ts";
-import type { AppAccessToken, DeviceData, OAuthData, TwitchAppTokenResponse, TwitchTokenResponse, TwitchValidateResponse } from "#lib/twitch/types.d.ts";
+import { TWITCH_ENDPOINTS, TWITCH_GRANT_TYPES } from "#server/integrations/twitch/constants.ts";
+import type { AppAccessToken, DeviceData, OAuthData, TwitchAppTokenResponse, TwitchTokenResponse, TwitchValidateResponse } from "#server/integrations/twitch/types.ts";
 
 export function isOAuth(data: OAuthData | DeviceData): data is OAuthData {
     return "accessToken" in data;
@@ -41,7 +41,7 @@ export async function refreshToken(userId: string, refreshToken: string): Promis
             expiresAt: Date.now() + data.expires_in * 1000,
         };
 
-        await authStorage.setItem(userId, oauth);
+        await clipperOAuthStorage.setItem(userId, oauth);
         return oauth;
     } catch (e) {
         return null;
@@ -49,7 +49,7 @@ export async function refreshToken(userId: string, refreshToken: string): Promis
 }
 
 export async function getAppAccessToken(): Promise<string> {
-    const cached = await procStorage.getItem<AppAccessToken>("twitch:app_token");
+    const cached = await clipperAppStorage.getItem<AppAccessToken>("twitch:app_token");
     const { clientId, clientSecret } = getTwitchConfig();
 
     if (cached && Date.now() < cached.expiresAt)
@@ -70,7 +70,7 @@ export async function getAppAccessToken(): Promise<string> {
         expiresAt: Date.now() + (res.expires_in - 60) * 1000,
     };
 
-    await procStorage.setItem("twitch:app_token", token);
+    await clipperAppStorage.setItem("twitch:app_token", token);
 
     return token.accessToken;
 }

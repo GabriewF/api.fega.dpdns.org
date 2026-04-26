@@ -44,6 +44,8 @@ export default defineConfig({
           logs: { enabled: true, invocation_logs: true },
         },
 
+        placement: { mode: "smart" },
+
         preview_urls: true,
         workers_dev: false,
       }

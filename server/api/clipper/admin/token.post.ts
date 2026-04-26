@@ -1,12 +1,11 @@
 
 import { defineHandler, HTTPError } from "nitro";
 
-import { FetchError } from "#lib/twitch/client.ts";
-import { generateApiKey } from "#lib/twitch/keys.ts";
-import { keyStorage } from "#lib/twitch/storages.ts";
-import { resolveTwitchChannels } from "#lib/twitch/users.ts";
+import { clipperChannelKeys } from "#lib/clipper/storage.ts";
+import { resolveTwitchChannels } from "#server/integrations/twitch/api/users.ts";
+import { generateApiKey } from "#server/integrations/twitch/auth/keys.ts";
+import { FetchError } from "#server/integrations/twitch/client.ts";
 import authMaster from "#server/middlewares/auth-master.ts";
-
 
 function assertStringChannels(arr: FormDataEntryValue[]): asserts arr is string[] {
     for (const item of arr) {
@@ -49,7 +48,7 @@ export default defineHandler({
         const channelIds = resolved.map(u => u.id);
         const token = generateApiKey();
 
-        await keyStorage.setItem(token, { channels: channelIds }, {});
+        await clipperChannelKeys.setItem(token, { channels: channelIds }, {});
 
         return Response.json({
             token,

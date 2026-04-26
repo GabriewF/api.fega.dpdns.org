@@ -1,6 +1,6 @@
 import { defineMiddleware, HTTPError } from "nitro";
 
-import { keyStorage } from "#lib/twitch/storages.ts";
+import { clipperChannelKeys } from "#lib/clipper/storage.ts";
 
 export default defineMiddleware(async ({ url, context }, next) => {
     const token = url.searchParams.get("token");
@@ -9,7 +9,7 @@ export default defineMiddleware(async ({ url, context }, next) => {
     if (!token || !channelId)
         throw new HTTPError("Missing parameters", { status: 400, statusText: "Bad Request " });
 
-    const tokenData = await keyStorage.getItem(token);
+    const tokenData = await clipperChannelKeys.getItem(token);
 
     if (!tokenData)
         throw new HTTPError("Invalid token", { status: 401, statusText: "Unauthorized" });

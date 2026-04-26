@@ -1,4 +1,4 @@
-import { twitchFetch } from "./client";
+import { twitchFetch } from "#server/integrations/twitch/client.ts";
 
 export interface TwitchUser {
     id: string;

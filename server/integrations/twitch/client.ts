@@ -2,8 +2,8 @@
 import { useRuntimeConfig } from "nitro/runtime-config";
 import { createFetch, FetchError } from "ofetch";
 
-import { HELIX_BASE } from "#lib/twitch/constants.ts";
-import { getAppAccessToken } from "#lib/twitch/oauth.ts";
+import { getAppAccessToken } from "#server/integrations/twitch/auth/oauth.ts";
+import { HELIX_BASE } from "#server/integrations/twitch/constants.ts";
 
 export const twitchFetch = createFetch({
     defaults: {

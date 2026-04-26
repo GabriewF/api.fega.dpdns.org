@@ -33,12 +33,12 @@ export interface TwitchClipResponse {
 }
 
 
-interface AppAccessToken {
+export interface AppAccessToken {
     accessToken: string;
     expiresAt: number;
 }
 
-interface TwitchAppTokenResponse {
+export interface TwitchAppTokenResponse {
     access_token: string;
     expires_in: number;
 }

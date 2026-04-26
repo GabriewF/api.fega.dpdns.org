@@ -1,10 +1,10 @@
 import { $fetch, FetchError } from "ofetch";
 
+import { clipperDeviceStorage, clipperOAuthStorage } from "#lib/clipper/storage.ts";
 import { getTwitchConfig } from "#lib/twitch/config.ts";
-import { TWITCH_ENDPOINTS, TWITCH_GRANT_TYPES, TWITCH_SCOPES } from "#lib/twitch/constants.ts";
-import { getTokenInfo, revokeToken } from "#lib/twitch/oauth.ts";
-import { authStorage, deviceStorage } from "#lib/twitch/storages.ts";
-import type { DeviceData, OAuthData, TwitchDeviceResponse, TwitchTokenResponse } from "#lib/twitch/types.d.ts";
+import { getTokenInfo, revokeToken } from "#server/integrations/twitch/auth/oauth.ts";
+import { TWITCH_ENDPOINTS, TWITCH_GRANT_TYPES, TWITCH_SCOPES } from "#server/integrations/twitch/constants.ts";
+import type { DeviceData, OAuthData, TwitchDeviceResponse, TwitchTokenResponse } from "#server/integrations/twitch/types.js";
 
 export async function startDeviceFlow(userId: string): Promise<DeviceData> {
     const { clientId } = getTwitchConfig();
@@ -25,19 +25,19 @@ export async function startDeviceFlow(userId: string): Promise<DeviceData> {
         expiresAt: Date.now() + data.expires_in * 1000,
     };
 
-    return await deviceStorage.setItem(userId, device)
+    return await clipperDeviceStorage.setItem(userId, device)
         .then(() => device);
 }
 
 export async function pollDeviceCode(userId: string): Promise<OAuthData | DeviceData | null> {
-    const device = await deviceStorage.getItem(userId);
+    const device = await clipperDeviceStorage.getItem(userId);
 
     { // Safe-guards
         if (!device)
             return null;
 
         if (Date.now() >= device.expiresAt) {
-            await deviceStorage.removeItem(userId);
+            await clipperDeviceStorage.removeItem(userId);
             return null;
         }
     }
@@ -60,7 +60,7 @@ export async function pollDeviceCode(userId: string): Promise<OAuthData | Device
 
         if (!info || info.user_id !== userId) {
             await revokeToken(data.access_token);
-            await deviceStorage.removeItem(userId);
+            await clipperDeviceStorage.removeItem(userId);
             return null;
         }
 
@@ -70,8 +70,8 @@ export async function pollDeviceCode(userId: string): Promise<OAuthData | Device
             expiresAt: Date.now() + data.expires_in * 1000,
         };
 
-        await authStorage.setItem(userId, oauth);
-        await deviceStorage.removeItem(userId);
+        await clipperOAuthStorage.setItem(userId, oauth);
+        await clipperDeviceStorage.removeItem(userId);
 
         return oauth;
     } catch (e) {

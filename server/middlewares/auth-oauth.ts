@@ -1,9 +1,10 @@
 import { defineMiddleware, HTTPError } from "nitro/h3";
 
-import { pollDeviceCode, startDeviceFlow } from "#lib/twitch/device.ts";
+import { clipperOAuthStorage } from "#lib/clipper/storage.ts";
 import { messages } from "#lib/twitch/messages.ts";
-import { isOAuth, refreshToken, validateToken } from "#lib/twitch/oauth.ts";
-import { authStorage } from "#lib/twitch/storages.ts";
+import { pollDeviceCode, startDeviceFlow } from "#server/integrations/twitch/auth/device.ts";
+import { isOAuth, refreshToken, validateToken } from "#server/integrations/twitch/auth/oauth.ts";
+
 
 
 export default defineMiddleware(async (event, next) => {
@@ -12,7 +13,7 @@ export default defineMiddleware(async (event, next) => {
     if (!userId)
         throw new HTTPError("Missing parameters", { status: 400, statusText: "Bad Request " });
 
-    let oAuth = await authStorage.getItem(userId);
+    let oAuth = await clipperOAuthStorage.getItem(userId);
 
     // Verifies OAuth
     if (oAuth) {
@@ -24,7 +25,7 @@ export default defineMiddleware(async (event, next) => {
             if (refreshed) {
                 oAuth = refreshed;
             } else {
-                await authStorage.removeItem(userId);
+                await clipperOAuthStorage.removeItem(userId);
                 oAuth = null;
             }
         }
