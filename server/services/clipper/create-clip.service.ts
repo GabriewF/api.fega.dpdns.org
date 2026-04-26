@@ -1,14 +1,27 @@
-import { sendDiscordWebhook } from "#server/integrations/discord/webhook.ts";
-import { getTwitchClipById } from "#server/integrations/twitch/api/clips.ts";
+import { sendDiscordWebhook } from "#server/integrations/discord/webhook";
+import { getTwitchClipById } from "#server/integrations/twitch/api/clips";
 
 export async function handleClipCreated(
     clipUrl: string,
     webhookUrl?: string
 ) {
-    const match = clipUrl.match(/clips\.twitch\.tv\/([^/?]+)/);
-    const clipId = match?.[1];
+    if (!webhookUrl) return;
 
-    if (!clipId || !webhookUrl) return;
+    let clipId: string | null = null;
+
+    const shortMatch = clipUrl.match(/clips\.twitch\.tv\/([^/?]+)/);
+
+    if (shortMatch) {
+        clipId = shortMatch[1];
+    }
+
+    const longMatch = clipUrl.match(/twitch\.tv\/[^/]+\/clip\/([^/?]+)/);
+
+    if (longMatch) {
+        clipId = longMatch[1];
+    }
+
+    if (!clipId) return;
 
     const clip = await getTwitchClipById(clipId);
     if (!clip) return;
