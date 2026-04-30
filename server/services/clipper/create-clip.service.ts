@@ -1,10 +1,7 @@
 import { sendDiscordWebhook } from "#server/integrations/discord/webhook.ts";
 import { getTwitchClipById } from "#server/integrations/twitch/api/clips.ts";
 import { getTwitchUserById } from "#server/integrations/twitch/api/users.ts";
-import {
-  MessageFlags,
-  type RESTPostAPIWebhookWithTokenJSONBody,
-} from "discord-api-types/v10";
+import { type RESTPostAPIWebhookWithTokenJSONBody } from "discord-api-types/v10";
 
 export async function handleClipCreated(
   clipId: string,
@@ -23,7 +20,7 @@ export async function handleClipCreated(
     username: clip.broadcaster_name,
     avatar_url: broadcasterUser?.profile_image_url,
 
-    content: `> [🎬](${clip.url}) Novo clip no canal!`,
+    content: `> [🎬](${clip.url}) Novo clip no canal!\n${clip.url}`,
 
     embeds: [
       {
@@ -50,12 +47,4 @@ export async function handleClipCreated(
   };
 
   await sendDiscordWebhook(webhookUrl, payload);
-
-  // Send clip URL as separate message for Discord to generate its own embed
-  const linkPayload: RESTPostAPIWebhookWithTokenJSONBody = {
-    content: clip.url,
-    flags: MessageFlags.SuppressNotifications,
-  };
-
-  await sendDiscordWebhook(webhookUrl, linkPayload);
 }
