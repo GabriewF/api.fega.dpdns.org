@@ -1,0 +1,28 @@
+{
+  "name": "@gabriewf/api.fega.dpdns.org",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite dev",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "nitro": "^3.0.260415-beta",
+    "ofetch": "^1.5.1",
+    "vite": "^8.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "discord-api-types": "^0.38.47",
+    "typescript": "^6.0.3"
+  },
+  "imports": {
+    "#lib/*": "./server/lib/*",
+    "#server/*": "./server/*",
+    "#/*": "./*"
+  },
+  "peerDependencies": {
+    "wrangler": "^4.85.0"
+  }
+}
