@@ -1,20 +1,20 @@
 import { sendDiscordWebhook } from "#server/integrations/discord/webhook.ts";
 import { getTwitchClipById } from "#server/integrations/twitch/api/clips.ts";
 import { getTwitchUserById } from "#server/integrations/twitch/api/users.ts";
-import type { RESTPostAPIWebhookWithTokenJSONBody } from "discord-api-types/v10";
-
+import {
+  MessageFlags,
+  type RESTPostAPIWebhookWithTokenJSONBody,
+} from "discord-api-types/v10";
 
 export async function handleClipCreated(
   clipId: string,
   webhookUrl: string,
 ): Promise<void> {
   // Does actually verifies if both values are not empty.
-  if (!webhookUrl || !clipId)
-    return;
+  if (!webhookUrl || !clipId) return;
 
   const clip = await getTwitchClipById(clipId);
-  if (!clip)
-    return;
+  if (!clip) return;
 
   const broadcasterUser = await getTwitchUserById(clip.broadcaster_id);
   const timestamp = Math.floor(new Date(clip.created_at).getTime() / 1000);
@@ -34,7 +34,7 @@ export async function handleClipCreated(
           `✂️ Clipado por **${clip.creator_name}**\n` +
           `🕒 <t:${timestamp}:F> (<t:${timestamp}:R>)`,
 
-        color: 0x9146FF,
+        color: 0x9146ff,
 
         image: clip.thumbnail_url
           ? { url: clip.thumbnail_url + `?t=${Date.now()}` }
@@ -50,4 +50,12 @@ export async function handleClipCreated(
   };
 
   await sendDiscordWebhook(webhookUrl, payload);
+
+  // Send clip URL as separate message for Discord to generate its own embed
+  const linkPayload: RESTPostAPIWebhookWithTokenJSONBody = {
+    content: clip.url,
+    flags: MessageFlags.SuppressNotifications,
+  };
+
+  await sendDiscordWebhook(webhookUrl, linkPayload);
 }
