@@ -20,30 +20,13 @@ export async function handleClipCreated(
     username: clip.broadcaster_name,
     avatar_url: broadcasterUser?.profile_image_url,
 
-    content: `> [🎬](${clip.url}) Novo clip no canal!\n${clip.url}`,
-
-    embeds: [
-      {
-        title: `🎮 ${clip.broadcaster_name} em destaque`,
-        url: clip.url,
-
-        description:
-          `✂️ Clipado por **${clip.creator_name}**\n` +
-          `🕒 <t:${timestamp}:F> (<t:${timestamp}:R>)`,
-
-        color: 0x9146ff,
-
-        image: clip.thumbnail_url
-          ? { url: clip.thumbnail_url + `?t=${Date.now()}` }
-          : undefined,
-
-        footer: {
-          text: "• Clique para assistir",
-        },
-
-        timestamp: clip.created_at,
-      },
-    ],
+    content: [
+      `> 🎬 **${clip.broadcaster_name}** em destaque`,
+      `✂️ Clipado por **${clip.creator_name}**`,
+      `🕒 <t:${timestamp}:F> (<t:${timestamp}:R>)`,
+      ``,
+      `[🎥 Assistir clip](${clip.url})`,
+    ].join("\n"),
   };
 
   await sendDiscordWebhook(webhookUrl, payload);
