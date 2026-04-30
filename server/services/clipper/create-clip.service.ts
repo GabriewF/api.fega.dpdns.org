@@ -22,10 +22,10 @@ export async function handleClipCreated(
 
     content: [
       `> 🎬 **${clip.broadcaster_name}** em destaque`,
-      `✂️ Clipado por **${clip.creator_name}**`,
-      `🕒 <t:${timestamp}:F> (<t:${timestamp}:R>)`,
+      `> ✂️ Clipado por **\`@${clip.creator_name}\`**`,
+      `> 🕒 **<t:${timestamp}:f>** _(<t:${timestamp}:R>)_`,
       ``,
-      `[🎥 Assistir clip](${clip.url})`,
+      `~~                                        ~~ [[🎥 **ASSISTIR CLIP**]](${clip.url}) ~~                                        ~~`,
     ].join("\n"),
   };
 
