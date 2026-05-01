@@ -1,6 +1,11 @@
-import { STORAGE_KEYS } from "#lib/clipper/storage-keys.ts";
-import type { AppAccessToken, DeviceData, OAuthData, TokenData } from "#server/integrations/twitch/types.ts";
 import { useStorage } from "nitro/storage";
+import { STORAGE_KEYS } from "#lib/clipper/storage-keys.ts";
+import type {
+    AppAccessToken,
+    DeviceData,
+    OAuthData,
+    TokenData,
+} from "#server/integrations/twitch/types.ts";
 
 export const clipperAppStorage = useStorage<AppAccessToken>(STORAGE_KEYS.PROC);
 

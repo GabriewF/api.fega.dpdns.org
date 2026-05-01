@@ -1,10 +1,10 @@
 import { useRuntimeConfig } from "nitro/runtime-config";
 
 export function getTwitchConfig() {
-  const { clipper } = useRuntimeConfig();
+    const { clipper } = useRuntimeConfig();
 
-  return {
-    clientId: clipper.twitchClientId,
-    clientSecret: clipper.twitchClientSecret,
-  };
+    return {
+        clientId: clipper.twitchClientId,
+        clientSecret: clipper.twitchClientSecret,
+    };
 }
