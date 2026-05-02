@@ -10,6 +10,9 @@ async function fetchUserBatch(
     ids: string[],
     logins: string[],
 ): Promise<TwitchUser[]> {
+    // Return early if no IDs or logins are provided
+    if (ids.length === 0 && logins.length === 0) return [];
+
     const query: Record<string, string[]> = {};
 
     if (ids.length > 0) query.id = ids;
@@ -24,6 +27,9 @@ async function fetchUserBatch(
 export async function resolveTwitchChannels(
     channels: string[],
 ): Promise<TwitchUser[]> {
+    // Return early if no channels are provided
+    if (channels.length === 0) return [];
+
     const ids: string[] = [];
     const logins: string[] = [];
 
@@ -76,6 +82,16 @@ export async function getTwitchUserById(
 ): Promise<TwitchUser | null> {
     const res = await twitchFetch<TwitchUsersResponse>("/users", {
         query: { id: userId },
+    });
+
+    return res.data[0] ?? null;
+}
+
+export async function getTwitchUserByLogin(
+    userLogin: string,
+): Promise<TwitchUser | null> {
+    const res = await twitchFetch<TwitchUsersResponse>("/users", {
+        query: { login: userLogin },
     });
 
     return res.data[0] ?? null;

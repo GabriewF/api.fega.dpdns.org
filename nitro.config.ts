@@ -2,7 +2,8 @@
 import { defineConfig } from "nitro";
 
 export default defineConfig({
-    compatibilityDate: "latest",
+    preset: "cloudflare-module",
+    compatibilityDate: "2026-05-01",
     serverDir: true,
 
     runtimeConfig: {
@@ -40,7 +41,6 @@ export default defineConfig({
 
                 observability: {
                     enabled: true,
-
                     logs: { enabled: true, invocation_logs: true },
                 },
 

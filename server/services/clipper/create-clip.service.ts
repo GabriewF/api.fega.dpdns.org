@@ -1,7 +1,10 @@
 import type { RESTPostAPIWebhookWithTokenJSONBody } from "discord-api-types/v10";
 import { sendDiscordWebhook } from "#server/integrations/discord/webhook.ts";
 import { getTwitchClipById } from "#server/integrations/twitch/api/clips.ts";
-import { getTwitchUserById } from "#server/integrations/twitch/api/users.ts";
+import {
+    getTwitchUserById,
+    getTwitchUserByLogin,
+} from "#server/integrations/twitch/api/users.ts";
 
 export async function handleClipCreated(
     clipId: string,
@@ -14,18 +17,21 @@ export async function handleClipCreated(
     if (!clip) return;
 
     const broadcasterUser = await getTwitchUserById(clip.broadcaster_id);
+    const clipperUser = await getTwitchUserByLogin(clip.creator_name);
+
     const timestamp = Math.floor(new Date(clip.created_at).getTime() / 1000);
+    const spacer = "~~" + " ".repeat(40) + "~~";
 
     const payload: RESTPostAPIWebhookWithTokenJSONBody = {
-        username: clip.broadcaster_name,
-        avatar_url: broadcasterUser?.profile_image_url,
+        username: clipperUser?.display_name,
+        avatar_url: clipperUser?.profile_image_url,
 
         content: [
             `> 🎬 **${clip.broadcaster_name}** em destaque`,
             `> ✂️ Clipado por **\`@${clip.creator_name}\`**`,
             `> 🕒 **<t:${timestamp}:f>** _(<t:${timestamp}:R>)_`,
             ``,
-            `~~                                        ~~ [[🎥 **ASSISTIR CLIP**]](${clip.url}) ~~                                        ~~`,
+            `${spacer} [[🎥 **ASSISTIR CLIP**]](${clip.url}) ${spacer}`,
         ].join("\n"),
     };
 

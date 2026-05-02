@@ -5,8 +5,8 @@ import authMaster from "#server/middlewares/auth-master.ts";
 export default defineHandler({
     middleware: [authMaster],
 
-    handler: async (event) => {
-        const token = await event.req.text();
+    handler: async ({ req }) => {
+        const token = await req.text();
 
         if (!token)
             throw new HTTPError("Missing token", {
@@ -20,10 +20,11 @@ export default defineHandler({
                 statusText: "Not Found",
             });
 
-        await clipperChannelKeys.removeItem(token);
+        await clipperChannelKeys.removeItem(token, { removeMeta: true });
 
-        event.res.status = 200;
-        event.res.statusText = "SUCCESS";
-        return { operation: "SUCCESS", message: "Token successfully removed" };
+        return {
+            operation: "SUCCESS",
+            message: "Token successfully removed",
+        };
     },
 });
