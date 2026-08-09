@@ -1,6 +1,6 @@
 {
-    "name": "@gabriewf/api.fega.dpdns.org",
-    "version": "0.0.1",
+    "name": "@gabriewf/api.fega.dev.br",
+    "version": "1.0.2",
     "type": "module",
     "scripts": {
         "build": "vite build",
