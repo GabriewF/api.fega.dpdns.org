@@ -11,17 +11,18 @@ Personal API for creating Twitch clips with Discord integration, hosted at `api.
 - **Framework**: Nitro v3.0 (Web Standards approach)
 - **Build Tool**: Vite v8
 - **Language**: TypeScript (strict mode)
-- **Storage**: Cloudflare KV (production) / Local filesystem (development)
+- **Package Manager**: Bun
+- **Storage**: Cloudflare KV (production) / In-memory LRU cache (development)
 - **Integrations**: Twitch API, Discord Webhooks
 - **HTTP Client**: `ofetch` (migrated from native fetch, Nitro-bundled)
 
 ---
 
 ## 🔧 Tooling & Dependency Management
-- **Toolchains**: Managed via [mise.en.dev](https://mise.en.dev) (successor to `asdf`, manages runtime/CLI tool versions)
-- **Dependencies**: Managed via [aube.en.dev](https://aube.en.dev) (superset of traditional Node.js package managers)
-- **Lockfile**: `bun.lock` (managed via `aube`, compatible with Bun's lockfile format)
-- **Shortcuts**: `aubr` = `aube run`, `aubx` = `aube dlx`
+- **Runtime/Package Manager**: [Bun](https://bun.sh) (all-in-one JavaScript runtime)
+- **Lockfile**: `bun.lock`
+- **Scripts**: Standard `package.json` scripts (`bun run dev`, `bun run build`, etc.)
+- **Deploy**: `wrangler` (installed globally or via `bun add -g wrangler`)
 
 ---
 
@@ -67,14 +68,17 @@ server/
 │       │   └── oauth.ts  # OAuth & App Access Tokens
 │       ├── client.ts     # Pre-configured Twitch API client (ofetch.create())
 │       ├── constants.ts  # Endpoints & scopes
-│       └── types.ts      # Centralized TypeScript types
+│       ├── types.ts      # Centralized TypeScript types
+│       └── user-client.ts # User-specific fetch client (for OAuth-scoped requests)
 ├── lib/                   # Utilities & config
 │   ├── clipper/          # Storage config
 │   │   ├── storage-keys.ts # Centralized storage key constants
 │   │   └── storage.ts    # useStorage() bindings
+│   ├── discord/          # Discord utilities
+│   │   └── webhook.ts    # Discord webhook URL validation utility
 │   └── twitch/           # Twitch config & messages
 │       ├── config.ts     # Twitch runtime config
-│       └── messages.ts   # Response messages (dead code removed: `clipError`)
+│       └── messages.ts   # Response messages
 ├── middlewares/           # Authentication
 │   ├── auth-master.ts    # Master Key validation
 │   ├── auth-oauth.ts     # Twitch OAuth flow (simplified responses)
@@ -107,11 +111,17 @@ Configured in `tsconfig.json` and `package.json`:
 - Stores OAuth tokens in `clipper:auth` storage
 - Automatic expired token refresh
 - Simplified response handling: uses `event.res.status` / `event.res.statusText` instead of manual `new Response()`
+- All responses return HTTP 200 for chatbot compatibility (even auth pending states)
 
 ### 3. Master Key (`auth-master.ts`)
 - Protects admin routes (`/clipper/admin/*`)
 - Validates `X-Master-Key` header
 - Configured via `NITRO_CLIPPER_MASTER_KEY`
+
+### 4. Rate Limit Handling (`user-client.ts`)
+- `TwitchRateLimitError` thrown on HTTP 429 from Twitch API
+- Extracts `Retry-After` header for client-side backoff
+- Clip endpoint returns friendly message: "Limite de requisições excedido. Tente novamente em {n} segundos."
 
 ---
 
@@ -124,12 +134,18 @@ Configured in `tsconfig.json` and `package.json`:
 
 **Optional parameter**:
 - `webhook`: Discord webhook URL
+- `title`: Clip title (defaults to "Clipe de {displayName} (@{login})" when omitted or "null")
+- `duration`: Clip duration in seconds
 
 **Flow**:
 1. Validate token and OAuth (middlewares)
-2. Create clip via Twitch API
+2. Create clip via Twitch API with dynamic default title based on creator name and login
 3. If webhook provided, send async notification via `event.waitUntil()`
 4. Return clip edit URL
+
+**Chatbot Parameter Handling**:
+- Query params sent as `null` string by chatbots (e.g., Nightbot) are treated as absent
+- Both JS `null` and the string `"null"` are handled equivalently
 
 ---
 
@@ -147,10 +163,10 @@ storage: {
 ### Development (Local)
 ```typescript
 storage: {
-  "clipper:auth": { driver: "fs", base: "clipper/auth/" },
-  "clipper:code": { driver: "fs", base: "clipper/code/" },
-  "clipper:keys": { driver: "fs", base: "clipper/keys/" },
-  "clipper:proc": { driver: "fs", base: "clipper/proc/" },
+  "clipper:auth": { driver: "lru-cache", base: "Clipper#Auth/" },
+  "clipper:code": { driver: "lru-cache", base: "Clipper#Code/" },
+  "clipper:keys": { driver: "lru-cache", base: "Clipper#Keys/" },
+  "clipper:proc": { driver: "lru-cache", base: "Clipper#Proc/" },
 }
 ```
 
@@ -158,7 +174,8 @@ storage: {
 
 ## 🎨 Discord Integration
 - Simple webhook delivery via `ofetch` in `server/integrations/discord/webhook.ts`
-- Payload construction happens directly in `create-clip.service.ts` (unused `builder.ts` removed as dead code)
+- Payload construction happens directly in `create-clip.service.ts`
+- `isValidDiscordWebhookUrl()` supports 6 Discord domains (discord.com, discordapp.com, PTB, Canary variants)
 - Only validates Discord webhook URL format (trust model: webhooks configured by streamers)
 
 ---
@@ -171,6 +188,7 @@ storage: {
 5. **Non-Blocking Event Loop**: Uses `event.waitUntil()` for async Cloudflare Workers processing
 6. **Centralized Types**: All Twitch/API types unified in `server/integrations/twitch/types.ts` (no duplicates)
 7. **Centralized Storage Keys**: All storage namespaces defined in `server/lib/clipper/storage-keys.ts`
+8. **Chatbot-Friendly Responses**: All endpoints return HTTP 200 with human-readable messages for chatbot display
 
 ---
 
@@ -190,13 +208,11 @@ runtimeConfig: {
 
 ## 📦 Available Scripts
 ```bash
-aube add <package>    # Add dependency
-aube remove <package> # Remove dependency
-aubr <script>        # Run package.json script (e.g., aubr dev, aubr build)
-aubx <package>       # Run temporary package (e.g., aubx cowsay hi)
-aubr dev             # Local development
-aubr build           # Production build
-aubr preview         # Local build preview
+bun install     # Install dependencies
+bun run dev     # Local development
+bun run build   # Production build
+bun run preview # Local build preview
+bun add -g wrangler  # Install Wrangler CLI for deployment
 ```
 
 ---
@@ -212,6 +228,7 @@ aubr preview         # Local build preview
 8. Deploy via Wrangler, configured in `nitro.config.ts` under `$production.cloudflare.wrangler`
 9. Dead code removed: `StorageNamespaces` (storage-keys.ts), `builder.ts`, `clipError` (messages.ts)
 10. Use pre-configured `twitchFetch` (ofetch.create()) for all Twitch API calls
+11. Query params may be sent as string `"null"` by chatbots - handle both JS null and string "null"
 
 ---
 
@@ -221,6 +238,7 @@ aubr preview         # Local build preview
 - [Twitch API](https://dev.twitch.tv/docs/api/)
 - [Discord Webhooks](https://discord.com/developers/docs/resources/webhook)
 - [ofetch Documentation](https://github.com/unjs/ofetch)
+- [Bun](https://bun.sh)
 
 ---
 
@@ -231,13 +249,9 @@ These files follow the `llms.txt` standard for AI agents to retrieve up-to-date 
 
 ---
 
-## 📝 Recent Changes (2026-04-29)
-- Removed dead code: `StorageNamespaces` export, deleted `builder.ts`, removed unused `clipError` message
-- Migrated all external API calls to `ofetch` (Twitch, Discord)
-- Simplified `auth-oauth.ts` response handling to use Nitro v3 Web Standards
-- Centralized all Twitch types and storage key constants
-
----
-
-**Last updated**: 29/04/2026
-**Maintainer**: @GabriewF
+## 📝 Recent Changes (2026-08-09)
+- Updated README and AGENTS.md to reflect Bun (not mise/aube) toolchain
+- Added dynamic clip titles with chatbot-friendly "null" handling
+- Implemented rate limit error handling with `TwitchRateLimitError`
+- Added friendly retry messages for chatbot responses on 429 errors
+- Updated default clip title to use creator display name and login ("Clipe de {displayName} (@{login})")

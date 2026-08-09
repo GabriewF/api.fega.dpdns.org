@@ -7,19 +7,18 @@ A personal API for creating Twitch clips with Discord integration, built with Ni
 - Create Twitch clips via API
 - Discord webhook integration for clip notifications
 - Channel access token management
-- Twitch OAuth2/Device authorization flow
-- Storage using Cloudflare KV (production) or local filesystem (development)
+- Twitch OAuth2/Device authorization flow with automatic token refresh
+- Rate limit handling with friendly retry messages for chatbots
+- Dynamic clip titles ("Clipe de {displayName} (@{login})") when none provided
+- Storage using Cloudflare KV (production) or in-memory LRU cache (development)
 - Automatic health check and 404 route handling
 - Non-blocking async processing with `event.waitUntil()`
 
 ## 📋 Prerequisites
 
-- [mise.en.dev](https://mise.en.dev) (toolchain manager, successor to `asdf`)
-- [aube.en.dev](https://aube.en.dev) (dependency manager, superset of traditional package managers)
+- [Bun](https://bun.sh) (runtime and package manager)
 - Cloudflare account (for deployment)
 - Twitch application credentials (Client ID and Client Secret)
-
-> **Note**: This project uses `bun.lock` as lockfile, managed via `aube`.
 
 ## 🔧 Environment Variables
 
@@ -38,14 +37,14 @@ NITRO_CLIPPER_MASTER_KEY=your_secure_master_key
 git clone git@github.com:GabriewF/api.fega.dpdns.org.git
 cd api.fega.dpdns.org
 
-# Install dependencies using aube
-aube install
+# Install dependencies
+bun install
 ```
 
 ## 🖥️ Running Locally
 
 ```bash
-aubr dev
+bun run dev
 ```
 
 The API will be available at `http://localhost:3000` (or the port configured by Vite/Nitro).
@@ -54,11 +53,22 @@ The API will be available at `http://localhost:3000` (or the port configured by 
 
 ### 1. Health Check
 - **GET** `/`
-- **Response:** `{ "status": "UP", "description": "Service is up and running." }`
+- **Response:** HTTP 200
+  ```json
+  {
+    "status": "Running",
+    "description": "Service is up and running."
+  }
+  ```
 
 ### 2. Not Found Route
 - **ANY METHOD** `/*`
-- **Response:** `{ "message": "Route Not Found" }` (Status 404)
+- **Response:** HTTP 404
+  ```json
+  {
+    "message": "Route Not Found"
+  }
+  ```
 
 ### 3. Create Twitch Clip
 - **GET** `/clipper/clip`
@@ -68,15 +78,15 @@ The API will be available at `http://localhost:3000` (or the port configured by 
   - `token`: Access token generated via admin endpoint
 - **Optional Parameters:**
   - `webhook`: Discord webhook URL (must be a valid Discord URL)
+  - `title`: Clip title (defaults to `"Clipe de {displayName} (@{login})"` if omitted or sent as `null`)
+  - `duration`: Clip duration in seconds (defaults to Twitch's default if omitted)
 - **Example Request:**
   ```bash
   curl "http://localhost:3000/clipper/clip?user_id=123&channel_id=456&token=abc123&webhook=https://discord.com/api/webhooks/..."
   ```
-- **Example Response:**
-  ```json
-  {
-    "message": "Clip created: https://clips.twitch.tv/edit/..."
-  }
+- **Example Response:** HTTP 200 with plain text
+  ```
+  Clipe criado! https://clips.twitch.tv/edit/...
   ```
 
 ### 4. Generate Access Token (Admin)
@@ -90,7 +100,7 @@ The API will be available at `http://localhost:3000` (or the port configured by 
     -F "channel=test_channel" \
     -F "channel=123456"
   ```
-- **Example Response:**
+- **Example Response:** HTTP 200
   ```json
   {
     "token": "generated_token_here",
@@ -110,21 +120,26 @@ The API will be available at `http://localhost:3000` (or the port configured by 
     -H "X-Master-Key: your_key" \
     -d "token_to_remove"
   ```
-- **Response:** Status 200 with `{ "operation": "SUCCESS", "message": "Token successfully removed" }`
+- **Response:** HTTP 200
+  ```json
+  {
+    "operation": "SUCCESS",
+    "message": "Token successfully removed"
+  }
+  ```
 
 ## 🌐 Deploy to Cloudflare
 
 The project is configured for Cloudflare Workers deployment using Nitro. Make sure you have Wrangler installed:
 
 ```bash
-# Install wrangler using aube
-aube add -g wrangler
+bun add -g wrangler
 ```
 
 Build and deploy:
 
 ```bash
-aubr build
+bun run build
 wrangler deploy
 ```
 
@@ -145,13 +160,15 @@ wrangler deploy
 │   ├── middlewares/       # Authentication (simplified Nitro v3 responses)
 │   └── services/          # Business logic (clip creation, Discord payload)
 ├── public/                # Public assets
+├── docs/                  # API documentation
 ├── nitro.config.ts        # Nitro configuration
-├── package.json           # Project dependencies
+├── package.json           # Project dependencies and scripts
 └── README.md              # This file
 ```
 
 ## 🛠️ Technology Stack
 
+- **Bun** (Runtime and package manager)
 - **Nitro v3** (Web Standards-compliant framework for serverless)
 - **Vite v8** (Build tool)
 - **TypeScript** (strict mode)
@@ -159,8 +176,6 @@ wrangler deploy
 - **Cloudflare KV** (Storage)
 - **Twitch Helix API** (with `ofetch` pre-configured client)
 - **Discord Webhooks** (with `ofetch` for delivery)
-- **mise.en.dev** (Toolchain manager)
-- **aube.en.dev** (Dependency manager)
 
 ## 🔐 Authentication
 
@@ -173,6 +188,7 @@ The API uses three authentication methods:
 ## 🎨 Discord Integration
 
 - Webhook URL format validation only (trust model: webhooks configured by streamers)
+- Supports 6 Discord domains (discord.com, discordapp.com, PTB, and Canary variants)
 - Payload construction directly in `create-clip.service.ts`
 - Asynchronous notifications via `event.waitUntil()` for non-blocking clip creation
 
@@ -183,6 +199,7 @@ The API uses three authentication methods:
 - **Centralized types**: All Twitch/API types in `server/integrations/twitch/types.ts`
 - **Centralized storage keys**: Defined in `server/lib/clipper/storage-keys.ts`
 - **Dead code removed**: `builder.ts`, `StorageNamespaces`, unused `clipError` message
+- **Chatbot-friendly responses**: All endpoints return HTTP 200 with human-readable messages. The clip endpoint specifically returns plain text strings for chatbot display compatibility, while admin/health endpoints return JSON objects.
 
 ## 📚 References
 
@@ -191,5 +208,4 @@ The API uses three authentication methods:
 - [Twitch API](https://dev.twitch.tv/docs/api/)
 - [Discord Webhooks](https://discord.com/developers/docs/resources/webhook)
 - [ofetch Documentation](https://github.com/unjs/ofetch)
-- [mise.en.dev](https://mise.en.dev)
-- [aube.en.dev](https://aube.en.dev)
+- [Bun](https://bun.sh)

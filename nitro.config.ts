@@ -80,10 +80,10 @@ export default defineConfig({
         sourcemap: true,
 
         storage: {
-            "clipper:auth": { driver: "fs", base: "clipper/auth/" },
-            "clipper:code": { driver: "fs", base: "clipper/code/" },
-            "clipper:keys": { driver: "fs", base: "clipper/keys/" },
-            "clipper:proc": { driver: "fs", base: "clipper/proc/" },
+            "clipper:auth": { driver: "lru-cache", base: "Clipper#Auth/" },
+            "clipper:code": { driver: "lru-cache", base: "Clipper#Code/" },
+            "clipper:keys": { driver: "lru-cache", base: "Clipper#Keys/" },
+            "clipper:proc": { driver: "lru-cache", base: "Clipper#Proc/" },
         },
     },
 });
