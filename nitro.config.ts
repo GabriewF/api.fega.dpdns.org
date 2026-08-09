@@ -34,10 +34,16 @@ export default defineConfig({
                 name: "api",
                 kv_namespaces: [{ binding: "CLIPPER" }],
 
-                route: {
-                    pattern: "api.fega.dpdns.org",
-                    custom_domain: true,
-                },
+                routes: [
+                    {
+                        pattern: "api.fega.dev.br",
+                        custom_domain: true,
+                    },
+                    {
+                        pattern: "api.fega.dpdns.org",
+                        custom_domain: true,
+                    },
+                ],
 
                 observability: {
                     enabled: true,
