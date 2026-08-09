@@ -9,15 +9,15 @@ export default defineHandler({
         const token = await req.text();
 
         if (!token)
-            throw new HTTPError("Missing token", {
+            throw new HTTPError({
+                message: "Missing token",
                 status: 400,
-                statusText: "Bad Request",
             });
 
         if (!(await clipperChannelKeys.hasItem(token)))
-            throw new HTTPError("Invalid token", {
+            throw new HTTPError({
+                message: "Invalid token",
                 status: 404,
-                statusText: "Not Found",
             });
 
         await clipperChannelKeys.removeItem(token, { removeMeta: true });

@@ -43,6 +43,13 @@ export async function startDeviceFlow(userId: string): Promise<DeviceData> {
         .then(() => device);
 }
 
+/**
+ * NOTE: Concurrent polls for the same userId may race during token exchange.
+ * Cloudflare KV does not provide native mutexes; the exchange is self-correcting
+ * (only one request wins the token, the rest fall into the catch and return
+ * the pending device state). A per-user lock could be added via a short-lived
+ * sentinel key if duplicate exchange requests become a real problem.
+ */
 export async function pollDeviceCode(
     userId: string,
 ): Promise<OAuthData | DeviceData | null> {

@@ -10,7 +10,7 @@ export async function handleClipCreated(
     clipId: string,
     webhookUrl: string,
 ): Promise<void> {
-    // Does actually verifies if both values are not empty.
+    // Guard: skip processing if either value is missing.
     if (!webhookUrl || !clipId) return;
 
     const clip = await getTwitchClipById(clipId);

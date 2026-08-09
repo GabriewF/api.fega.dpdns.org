@@ -22,14 +22,7 @@ export function isOAuth(data: OAuthData | DeviceData): data is OAuthData {
 }
 
 export async function validateToken(accessToken: string): Promise<boolean> {
-    try {
-        const response = await $fetch.raw(TWITCH_ENDPOINTS.validate, {
-            headers: { Authorization: `OAuth ${accessToken}` },
-        });
-        return response.ok;
-    } catch {
-        return false;
-    }
+    return (await getTokenInfo(accessToken)) !== null;
 }
 
 export async function refreshToken(

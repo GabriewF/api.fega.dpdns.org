@@ -60,6 +60,8 @@ export default defineMiddleware(async (event, next) => {
                 return msg(device.verificationUri, device.userCode);
             }
         } catch {
+            // Device flow initiation failed; surface a chatbot-friendly
+            // retry message (200, not a technical error).
             event.res.status = 200;
             return messages.authError;
         }

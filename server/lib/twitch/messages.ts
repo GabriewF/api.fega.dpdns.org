@@ -8,4 +8,6 @@ export const messages = {
     authError: "Erro ao iniciar autenticação. Tente novamente.",
     clipNoData: "Clipe criado mas sem resposta da Twitch. Tente novamente.",
     clipInternal: "Erro interno ao criar o clipe. Tente novamente.",
+    rateLimited: (retryAfter: number) =>
+        `Limite de requisições excedido. Tente novamente em ${retryAfter} segundos.`,
 } as const;
