@@ -12,6 +12,7 @@ import authToken from "#server/middlewares/auth-token.ts";
 import { handleClipCreated } from "#server/services/clipper/create-clip.service.ts";
 import { isValidDiscordWebhookUrl } from "#lib/discord/webhook.ts";
 import { getTwitchUserById } from "#server/integrations/twitch/api/users.ts";
+import { parseClipCommand } from "#lib/clipper/parser.ts";
 
 interface IContext extends H3EventContext {
     userId: string;
@@ -30,39 +31,33 @@ export default defineHandler({
             ? decodeURIComponent(webhookUrlParam)
             : undefined;
 
-        // searchParams.get returns null when the param is absent.
-        // Some chatbots (e.g. Nightbot) send the literal string "null" when
-        // a user omits an argument, so we guard against that too.
-        const titleParam = event.url.searchParams.get("title");
-        const durationParam = event.url.searchParams.get("duration");
+        const rawQuery = event.url.searchParams.get("query");
+
+        const queryInput =
+            rawQuery && rawQuery !== "null" && rawQuery !== "undefined"
+                ? rawQuery
+                : "";
 
         try {
-            // Build request body - broadcaster_id is required, title and duration are optional
+            const parsedArgs = parseClipCommand(queryInput);
+
             const bodyParams: Record<string, string> = {
                 broadcaster_id: channelId,
             };
 
-            // Use provided title or generate a dynamic default.
-            // Reject null, undefined, empty string, and the string "null" sent by chatbots.
-            if (titleParam && titleParam !== "null" && titleParam !== "undefined") {
-                bodyParams.title = titleParam;
+            if (parsedArgs.duration !== undefined) {
+                bodyParams.duration = String(parsedArgs.duration);
+            }
+
+            if (parsedArgs.title) {
+                bodyParams.title = parsedArgs.title;
             } else {
-                // Default title uses the creator's display name and login
                 const user = await getTwitchUserById(userId);
                 const displayName = user?.display_name ?? userId;
                 const login = user?.login ?? userId;
                 bodyParams.title = `Clipe de ${displayName} (@${login})`;
             }
 
-            // Same guard for duration: reject "null" and "undefined" strings.
-            if (durationParam && durationParam !== "null" && durationParam !== "undefined") {
-                const duration = parseFloat(durationParam);
-                if (!isNaN(duration)) {
-                    bodyParams.duration = String(duration);
-                }
-            }
-
-            // Create a user-specific fetch client with the user's OAuth token
             const userTwitchFetch = createUserTwitchFetch(oauth.accessToken);
 
             const data = await userTwitchFetch<{
@@ -86,12 +81,14 @@ export default defineHandler({
 
             return messages.createdClip(clip.edit_url);
         } catch (e: unknown) {
-            // Handle rate limit errors by returning a retry message for chatbots
+            if (e instanceof Error && !(e instanceof TwitchRateLimitError)) {
+                // return e.message;
+            }
+
             if (e instanceof TwitchRateLimitError) {
                 return messages.rateLimited(e.retryAfter);
             }
 
-            // Log error for debugging (not exposed to client)
             console.error("Error creating clip:", e);
             return messages.clipInternal;
         }
