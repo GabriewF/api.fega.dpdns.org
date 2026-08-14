@@ -13,7 +13,7 @@ import {
 
 // NOTE: Any response intended to be displayed by Chatbots must be sent with a 200 status code.
 export default defineMiddleware(async (event, next) => {
-    const userId = event.url.searchParams.get("user_id");
+    const userId = event.url.searchParams.get("user_id") ?? event.context.params?.userId;
 
     if (!userId) {
         throw new HTTPError("Missing parameters", {

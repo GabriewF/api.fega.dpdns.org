@@ -3,7 +3,7 @@ import { clipperChannelKeys } from "#lib/clipper/storage.ts";
 
 export default defineMiddleware(async (event, next) => {
     const token = event.url.searchParams.get("token");
-    const channelId = event.url.searchParams.get("channel_id");
+    const channelId = event.url.searchParams.get("channel_id") ?? event.context.params?.channelId;
 
     if (!token || !channelId) {
         throw new HTTPError("Missing parameters", {
