@@ -41,21 +41,25 @@ export default defineHandler({
         try {
             const parsedArgs = parseClipCommand(queryInput);
 
-            const bodyParams: Record<string, string> = {
+            const bodyParams = new URLSearchParams({
                 broadcaster_id: channelId,
-            };
+            });
 
             if (parsedArgs.duration !== undefined) {
-                bodyParams.duration = String(parsedArgs.duration);
+                bodyParams.set("duration", parsedArgs.duration.toString());
             }
 
             if (parsedArgs.title) {
-                bodyParams.title = parsedArgs.title;
+                bodyParams.set("title", parsedArgs.title);
             } else {
                 const user = await getTwitchUserById(userId);
-                const displayName = user?.display_name ?? userId;
-                const login = user?.login ?? userId;
-                bodyParams.title = `Clipe de ${displayName} (@${login})`;
+
+                if (user) {
+                    const displayName = user.display_name ?? "Desconhecido";
+                    const login = user.login;
+
+                    bodyParams.set("title", `Clipe de ${displayName} (@${login})`);
+                }
             }
 
             const userTwitchFetch = createUserTwitchFetch(oauth.accessToken);
