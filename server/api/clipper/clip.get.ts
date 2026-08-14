@@ -46,11 +46,16 @@ export default defineHandler({
             });
 
             if (parsedArgs.duration !== undefined) {
-                bodyParams.set("duration", parsedArgs.duration.toString());
+                const duration = Math.min(Math.max(parsedArgs.duration, 5), 60);
+                bodyParams.set("duration", duration.toString());
             }
 
             if (parsedArgs.title) {
-                bodyParams.set("title", parsedArgs.title);
+                const title = parsedArgs.title.length > 100
+                    ? parsedArgs.title.slice(0, 97) + "..."
+                    : parsedArgs.title;
+
+                bodyParams.set("title", title);
             } else {
                 const user = await getTwitchUserById(userId);
 
